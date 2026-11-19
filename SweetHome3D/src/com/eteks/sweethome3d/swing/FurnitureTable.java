@@ -727,10 +727,31 @@ public class FurnitureTable extends JTable implements View, Printable {
    * Prints this component to make it fill <code>pageFormat</code> imageable size.
    */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
+    return print(g, pageFormat, pageIndex, false);
+  }
+
+  /**
+   * Prints this component, optionally adding the Level column for printed output only
+   */
+  public int print(Graphics g, PageFormat pageFormat, int pageIndex,
+                   boolean printLevelColumn) throws PrinterException {
     // Create a printable column model from the column model of this table 
     // with printable renderers for each column
     DefaultTableColumnModel printableColumnModel = new DefaultTableColumnModel();
     TableColumnModel columnModel = getColumnModel();
+    List<TableColumn> columns = new ArrayList<TableColumn>();
+    boolean levelColumnDisplayed = false;
+    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+      TableColumn tableColumn = columnModel.getColumn(columnIndex);
+      columns.add(tableColumn);
+      if (HomePieceOfFurniture.SortableProperty.LEVEL.equals(tableColumn.getIdentifier())) {
+        levelColumnDisplayed = true;
+      }
+    }
+    if (printLevelColumn && !levelColumnDisplayed) {
+      FurnitureTableColumnModel furnitureColumnModel = (FurnitureTableColumnModel)columnModel;
+      columns.add(furnitureColumnModel.availableColumns.get(HomePieceOfFurniture.SortableProperty.LEVEL));
+    }
     final DefaultTableCellRenderer defaultRenderer = new DefaultTableCellRenderer();
     defaultRenderer.setHorizontalAlignment(DefaultTableCellRenderer.CENTER);
     TableCellRenderer printableHeaderRenderer = new TableCellRenderer() {
@@ -750,8 +771,7 @@ public class FurnitureTable extends JTable implements View, Printable {
           return headerRendererLabel;
         }
       };
-    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
-      final TableColumn tableColumn = columnModel.getColumn(columnIndex);
+    for (final TableColumn tableColumn : columns) {
       // Create a printable column from existing table column
       TableColumn printableColumn = new TableColumn();
       printableColumn.setIdentifier(tableColumn.getIdentifier());
